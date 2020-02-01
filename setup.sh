@@ -10,7 +10,7 @@ mkdir /opt/offline
 cd /opt/offline
 wget https://raw.githubusercontent.com/richacker/offline-uploader/master/index.js
 wget https://raw.githubusercontent.com/richacker/offline-uploader/master/cred.csv
-wget https://github.com/richacker/offline-uploader/blob/master/config.js
+wget https://raw.githubusercontent.com/richacker/offline-uploader/master/config.js
 wget https://raw.githubusercontent.com/richacker/offline-uploader/master/cron.js
 npm i readline
 npm i is-online
