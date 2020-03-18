@@ -32,7 +32,7 @@ mqtt:
 serial:
   # Location of CC2531 USB sniffer
   port: /dev/ttyACM0`
-        var newData = newContent + creddata.substring(creddata.lastIndexOf("devices:"), data.length)
+        var newData = newContent + creddata.substring(creddata.lastIndexOf("devices:"), creddata.length)
 
         fs.writeFile(dockerfile, newData, function (err) {
             if (err) {
