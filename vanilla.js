@@ -2,17 +2,11 @@
 var fs = require('fs');
 
 try {
-
     var credfile = '/opt/offline/cred.json';
     var dockerfile = '/opt/offline/data/configuration.yaml';
-
-
     fs.readFile(credfile, { encoding: 'utf-8' }, function (err, creddata) {
         fs.readFile(dockerfile, { encoding: 'utf-8' }, function (err, dockerdata) {
         var JSONCredData = JSON.parse(creddata);
-
-
-
         var newContent = `# Home Assistant integration (MQTT discovery)
 homeassistant: false
 
@@ -26,13 +20,14 @@ mqtt:
   # MQTT server URL
   server: 'mqtt://mqtt.tfy.ai'
   # MQTT server authentication, uncomment if required:
-   user: ${JSONCredData.username}
-   password: ${JSONCredData.password}
+  user: '${JSONCredData.username}'
+  password: ${JSONCredData.password}
 
 # Serial settings
 serial:
   # Location of CC2531 USB sniffer
-  port: /dev/ttyACM0`
+  port: /dev/ttyACM0
+`
         var newData = newContent + dockerdata.substring(dockerdata.lastIndexOf("devices:"), dockerdata.length)
 
         fs.writeFile(dockerfile, newData, function (err) {
@@ -45,5 +40,3 @@ serial:
 } catch (e) {
     console.log(e);
 }
-
-
