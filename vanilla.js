@@ -8,6 +8,7 @@ try {
 
 
     fs.readFile(credfile, { encoding: 'utf-8' }, function (err, creddata) {
+        fs.readFile(dockerfile, { encoding: 'utf-8' }, function (err, dockerdata) {
         var JSONCredData = JSON.parse(creddata);
 
 
@@ -32,7 +33,7 @@ mqtt:
 serial:
   # Location of CC2531 USB sniffer
   port: /dev/ttyACM0`
-        var newData = newContent + creddata.substring(creddata.lastIndexOf("devices:"), creddata.length)
+        var newData = newContent + dockerdata.substring(dockerdata.lastIndexOf("devices:"), dockerdata.length)
 
         fs.writeFile(dockerfile, newData, function (err) {
             if (err) {
@@ -40,6 +41,7 @@ serial:
             }
         })
     });
+});
 } catch (e) {
     console.log(e);
 }
