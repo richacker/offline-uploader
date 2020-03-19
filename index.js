@@ -1,5 +1,6 @@
 var fs = require('fs');
-var obj = JSON.parse(fs.readFileSync('/opt/offline/cred.json', 'utf8'));
+var credFilePath = '/opt/offline/cred.json';
+var obj = JSON.parse(fs.readFileSync(credFilePath, 'utf8'));
 
 var mqtt = require('mqtt')
 var localClient = mqtt.connect('mqtt://localhost')
@@ -16,9 +17,10 @@ localClient.on('connect', function () {
     })
 })
 
+//read date specific file and purge all
 tfyClient.on('connect', function () {
-
-    //check if something exists in file & publish
+    try{
+        //check if something exists in file & publish
     if (fs.existsSync("/opt/offline/sync.tsv")) {
         let rl = readline.createInterface({
             input: fs.createReadStream("/opt/offline/sync.tsv")
@@ -38,11 +40,21 @@ tfyClient.on('connect', function () {
         });
     }
 
+
+    } catch(e){
+        console.log("error reading from file", e)
+        console.log("discarding the file")
+        fs.unlinkSync("/opt/offline/sync.tsv");
+    }
+    
+
     tfyClient.subscribe('/OTA', function (err) {
         console.log("connected to tfy")
     })
 })
 
+
+//date specific file
 localClient.on('message', function (topic, message) {
     
     try {
@@ -54,12 +66,11 @@ localClient.on('message', function (topic, message) {
             } else if(message.toString() == "offline"){
                 msgObj = {"hubStatus": 0}
             }
-        }  else {
-            msgObj = JSON.parse(message.toString());
         }
         
         let deviceFromTopic = topic.split("/")[1];
         if (msgObj["temperature"] || msgObj["hubStatus"]) {
+            msgObj = JSON.parse(message.toString());
             (async () => {
                 if (await isOnline()) {
                     console.log("publishing to tfy", obj.topicPrefix + "/" + deviceFromTopic, JSON.stringify(msgObj));
@@ -71,6 +82,11 @@ localClient.on('message', function (topic, message) {
                     fs.appendFileSync('/opt/offline/sync.tsv', `${obj.topicPrefix}/${deviceFromTopic}\t${JSON.stringify(msgObj)}\n`);
                 }
             })()
+        } else {
+            if (await isOnline()) {
+                console.log("publishing to tfy", obj.topicPrefix + "/" + topic, message.toString());
+                tfyClient.publish(obj.topicPrefix + "/" + topic, message.toString());
+            }
         }
     } catch (e) {
         console.log("error at local message", e);
@@ -78,15 +94,22 @@ localClient.on('message', function (topic, message) {
 })
 
 //OTA firmware
+//OTA firmware for devicie specific without version update
 tfyClient.on('message', function (topic, message) {
     try {
         console.log(topic, message.toString());
-        console.log(topic, message.toString());
         var fileObj = JSON.parse(message.toString());
         if(fileObj.version && fileObj.version != obj.version){
-            exec('wget -q ' + fileObj.filepath + ' -O ' + fileObj.filename, (err, stdout, stderr) => {
-                exec('chmod 777 ' + fileObj.filename + " && /opt/offline/" + fileObj.filename, (err, stdout, stderr) => {
+            exec('wget -q ' + fileObj.filepath + ' -O /opt/offline/' + fileObj.filename, (err, stdout, stderr) => {
+                exec('chmod 777 /opt/offline/' + fileObj.filename + " && sh /opt/offline/" + fileObj.filename, (err, stdout, stderr) => {
                     console.log("success")
+                    obj.version = fileObj.version;
+                    fs.writeFile(credFilePath, JSON.stringify(obj), function (err) {
+                        if (err) {
+                            console.log(err)
+                        }
+                        tfyClient.publish(obj.topicPrefix + "/" + topic, "updated to " + obj.version);
+                    })
                 });
             });
         }
