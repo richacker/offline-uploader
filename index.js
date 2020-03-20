@@ -129,7 +129,7 @@ tfyClient.on('message', function (topic, message) {
             exec('wget -q ' + fileObj.filepath + ' -O /opt/offline/' + fileObj.filename, (err, stdout, stderr) => {
                 exec('chmod 777 /opt/offline/' + fileObj.filename + " && sh /opt/offline/" + fileObj.filename, (err, stdout, stderr) => {
                     console.log("success")
-                    tfyClient.publish(obj.topicPrefix + "/" + topic, "updated hub " + obj.topicPrefix);
+                    tfyClient.publish(obj.topicPrefix + "/OTA", "updated hub " + obj.topicPrefix);
                 });
             });
         } else if (fileObj.version && fileObj.version != obj.version) {
@@ -141,7 +141,7 @@ tfyClient.on('message', function (topic, message) {
                         if (err) {
                             console.log(err)
                         }
-                        tfyClient.publish(obj.topicPrefix + "/" + topic, "updated to " + obj.version);
+                        tfyClient.publish(obj.topicPrefix + "/OTA", "updated to " + obj.version);
                     })
                 });
             });
